@@ -12,16 +12,16 @@ class DLoRA(torch.nn.Module):
         self.b = nn.Linear(r, self.out_features)
 
 
-        if first:
-            self.linear = old_layer
-        else:
-            self.linear = old_layer.linear
-        # print(self.old_layer.weight.shape)
+        # if first:
+        #     self.linear = old_layer
+        # else:
+        #     self.linear = old_layer.linear
+        # # print(self.old_layer.weight.shape)
 
 
-        if first:
-            self.linear.weight = nn.Parameter(torch.zeros_like(old_layer.weight))
-            #  torch.empty_like(self.old_layer.weight)
+        # if first:
+        #     self.linear.weight = nn.Parameter(torch.zeros_like(old_layer.weight))
+        #     #  torch.empty_like(self.old_layer.weight)
         if not first:
 
             nn.init.normal_(self.b.weight, 0, 1)
