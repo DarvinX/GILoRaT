@@ -63,7 +63,8 @@ if __name__ == "__main__":
                                           "val_loss", 
                                           "val_acc", 
                                           "num_params", 
-                                          "test_acc"])
+                                          "test_acc",
+                                          "rank"])
     
     prev_running_loss = 0.0
     best_acc = 0
@@ -109,7 +110,7 @@ if __name__ == "__main__":
 
                 num_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
                 print(f"Epoch: {epoch+1}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Test_Acc : {test_acc:.4f}")
-                logger.log([epoch+1, i,  train_loss, train_acc, val_loss, val_acc, num_params, test_acc])
+                logger.log([epoch+1, i,  train_loss, train_acc, val_loss, val_acc, num_params, test_acc, r-1])
 
                 if wait >= r*2: #patience: consider patience as r
                     # print("saved")
