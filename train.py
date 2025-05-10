@@ -1,8 +1,10 @@
 import argparse
 from models.AlexNet import AlexNet
+from models.LeNet5 import LeNet5
 from utils.utils import Logger, evaluate
 from core.og_wrapper import change_to_dlora, custom_optim_params, ortho_loss_fn
 from dataloader.CIFAR10 import CIFAR10Dataloader
+from dataloader.MNIST import MNISTDataloder
 
 import torch
 import torch.nn as nn
@@ -11,15 +13,31 @@ import torch.optim as optim
 from tqdm import tqdm
 from torchsummary import summary
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--init_rank", type=int, default=2)
+parser.add_argument("--increment", type=int, default=2)
+parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--print_batch", type=int, default=300)
+parser.add_argument("--model", type=str, choices=["LeNet", "AlexNet"])
+parser.add_argument("--dataset", type=str, choices=["MNIST", "CIFAR10"])
+parser.add_argument("--use_ortho_loss", action=argparse.BooleanOptionalAction)
+parser.add_argument("--log_name", type=str)
+parser.add_argument("--lr", type=float, default=0.001)
+
+args = parser.parse_args()
+
 if __name__ == "__main__":
+
+    print(args)
+    # exit()
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     # hyperparameters
-    init_rank = 2
-    increment = 2
-    epoch = 50
-    print_batch = 300
+    init_rank = args.init_rank
+    increment = args.increment
+    epochs = args.epochs
+    print_batch = args.print_batch
 
-    net = AlexNet()
+    net = AlexNet() if args.model == "AlexNet" else LeNet5()
     
     r = 1
     first = True
@@ -33,8 +51,12 @@ if __name__ == "__main__":
     param_list = custom_optim_params(net)
     optimizer = optim.Adam(param_list, lr=0.001)
 
-    dataLoader = CIFAR10Dataloader()
-    logger = Logger("training_log.csv", cols=["epoch",
+    dataLoader = CIFAR10Dataloader() if args.dataset == "CIFAR10" else MNISTDataloder()
+    
+    if not args.log_name:
+        raise Exception("Please specify the name of the log file")
+
+    logger = Logger(args.log_name, cols=["epoch",
                                           "step", 
                                           "train_loss", 
                                           "train_acc", 
@@ -49,7 +71,7 @@ if __name__ == "__main__":
     val_acc_history = []
 
     net = net.to(device)
-    for epoch in range(epoch):  # loop over the dataset multiple times
+    for epoch in range(epochs):  # loop over the dataset multiple times
         running_loss = 0.0
 
         d_progress = tqdm(dataLoader.train_loader)
@@ -60,10 +82,12 @@ if __name__ == "__main__":
             optimizer.zero_grad()
 
             outputs = net(inputs)
-            c_loss = criterion(outputs, labels)
-            ortho_loss = ortho_loss_fn(net)
+            loss = criterion(outputs, labels)
+            
+            if args.use_ortho_loss:
+                ortho_loss = ortho_loss_fn(net)
+                loss += ortho_loss
 
-            loss = c_loss + (ortho_loss)
             loss.backward()
             optimizer.step()
 
@@ -105,7 +129,6 @@ if __name__ == "__main__":
                     running_loss = 0.0
                 prev_running_loss = running_loss
                 running_loss = 0.0
-
 
 
     print('Finished Training')
