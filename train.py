@@ -118,7 +118,7 @@ if __name__ == "__main__":
                     wait = 0
 
                     for _ in range(increment):
-                        change_to_dlora(net, r=r)
+                        change_to_dlora(net, r=r, ignore_score=False)
                         r+=1
                     # print(f'ortho_loss: {ortho_loss}')
                     net.to("cuda:0")
